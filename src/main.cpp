@@ -14,6 +14,9 @@ bool moveXYZ(float x_pos, float y_pos, float z_pos)
     target_x_Pos = x_pos;
     target_y_Pos = y_pos;
     target_z_Pos = z_pos;
+    movement_x_done = false;
+    movement_y_done = false;
+    movement_z_done = false;
     return true;
   }
   else

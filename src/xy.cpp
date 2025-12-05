@@ -13,8 +13,8 @@ FastAccelStepper *Stepper_y = nullptr;
 float target_x_Pos = 00.0;
 float target_y_Pos = 00.0;
 
-volatile bool movement_x_done = false;
-volatile bool movement_y_done = false;
+volatile bool movement_x_done = true;
+volatile bool movement_y_done = true;
 
 volatile bool homingDone_x = false;
 volatile bool homingDone_y = false;

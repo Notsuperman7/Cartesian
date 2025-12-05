@@ -5,7 +5,7 @@
 portMUX_TYPE encMux = portMUX_INITIALIZER_UNLOCKED;
 
 float target_z_Pos = 00.0; // target in mm
-volatile bool movement_z_done = false;
+volatile bool movement_z_done = true;
 volatile bool homingDone_z = false;
 
 volatile long encoderCount = 0;
