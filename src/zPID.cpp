@@ -12,7 +12,6 @@ volatile uint32_t isrCallCount = 0;    // Debug: count ISR calls
 
 unsigned long lastTime = 0;
 long lastCount = 0;
-
 // No lookup table needed - simple direction detection on RISING edge of A
 // Direction determined by B phase when A rises
 
@@ -28,11 +27,13 @@ void IRAM_ATTR encoderISR()
     uint8_t b = (gpioState >> ENC_B) & 1;
 
     // On rising edge of A: if B is low, we're going forward; if B is high, backward
-    // This is the standard quadrature decoding approach
-    if (b) {
-        encoderCount--;  // Backward
-    } else {
-        encoderCount++;  // Forward
+    if (b)
+    {
+        encoderCount--; // Backward
+    }
+    else
+    {
+        encoderCount++; // Forward
     }
 }
 

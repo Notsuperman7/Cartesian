@@ -16,7 +16,7 @@ constexpr int stepsPerMM_x = 25;         // steps per mm for the motor  => pitch
 constexpr int microsteps_x = 16;         // microstepping setting
 // Y Axis Motor Configuration
 constexpr int maxTravelDistance_y = 420; // 420mm (corrected from 430mm in comment)
-constexpr int stepsPerMM_y = 25;         // steps per mm for the motor
+constexpr float stepsPerMM_y = 10.75;         // steps per mm for the motor
 constexpr int microsteps_y = 16;         // microstepping setting
 
 #endif
