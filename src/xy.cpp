@@ -64,85 +64,89 @@ void startup_XY()
     }
 
     Serial.println("Steppers configured, starting homing...");
-
-
 }
 
 void motionTask_x(void *pvParameters)
 {
     // Wait for homing to complete
-    while (!homingDone_x || !homingDone_y )
+    while (!homingDone_x || !homingDone_y || !homingDone_z)
     {
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     Serial.println("Motion X task proceeding after homing");
 
-    int targetSteps_x = (int)(constrain(target_x_Pos, 0, maxTravelDistance_x) * stepsPerMM_x * microsteps_x);
-    Serial.print("Moving X to position: ");
-    Serial.println(targetSteps_x);
+    float lastTarget_x = -1.0; // Track last target to detect changes
 
-    if (Stepper_x)
-    {
-        // Issue non-blocking move; FastAccelStepper handles stepping via timer
-        Stepper_x->moveTo(targetSteps_x);
-    }
-
-    // Keep task alive and monitor movement
     while (1)
     {
-        if (Stepper_x && !Stepper_x->isRunning())
+        // Check if target position has changed
+        if (target_x_Pos != lastTarget_x && movement_x_done)
+        {
+            lastTarget_x = target_x_Pos;
+            movement_x_done = false;
+
+            int targetSteps_x = (int)(constrain(target_x_Pos, 0, maxTravelDistance_x) * stepsPerMM_x * microsteps_x);
+            Serial.print("Moving X to position: ");
+            Serial.println(targetSteps_x);
+
+            if (Stepper_x)
+            {
+                // Issue non-blocking move; FastAccelStepper handles stepping via timer
+                Stepper_x->moveTo(targetSteps_x);
+            }
+        }
+
+        // Monitor movement completion
+        if (Stepper_x && !Stepper_x->isRunning() && !movement_x_done)
         {
             Serial.println("X movement completed");
             movement_x_done = true;
-            break; // Exit if movement is done
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
 
-    // Keep task alive
-    while (1)
-    {
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 void motionTask_y(void *pvParameters)
 {
     // Wait for homing to complete
-    while (!homingDone_x || !homingDone_y)
+    while (!homingDone_x || !homingDone_y || !homingDone_z)
     {
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     Serial.println("Motion Y task proceeding after homing");
 
-    int targetSteps_y = (int)(constrain(target_y_Pos, 0, maxTravelDistance_y) * stepsPerMM_y * microsteps_y);
-    Serial.print("Moving Y to position: ");
-    Serial.println(targetSteps_y);
+    float lastTarget_y = -1.0; // Track last target to detect changes
 
-    if (Stepper_y)
-    {
-        // Issue non-blocking move; FastAccelStepper handles stepping via timer
-        Stepper_y->moveTo(targetSteps_y);
-    }
-
-    // Keep task alive and monitor movement
     while (1)
     {
-        if (Stepper_y && !Stepper_y->isRunning())
+        // Check if target position has changed
+        if (target_y_Pos != lastTarget_y && movement_y_done)
+        {
+            lastTarget_y = target_y_Pos;
+            movement_y_done = false;
+
+            int targetSteps_y = (int)(constrain(target_y_Pos, 0, maxTravelDistance_y) * stepsPerMM_y * microsteps_y);
+            Serial.print("Moving Y to position: ");
+            Serial.println(targetSteps_y);
+
+            if (Stepper_y)
+            {
+                // Issue non-blocking move; FastAccelStepper handles stepping via timer
+                Stepper_y->moveTo(targetSteps_y);
+            }
+        }
+
+        // Monitor movement completion
+        if (Stepper_y && !Stepper_y->isRunning() && !movement_y_done)
         {
             Serial.println("Y movement completed");
             movement_y_done = true;
-            break; // Exit if movement is done
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
 
-    // Keep task alive
-    while (1)
-    {
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -168,11 +172,11 @@ void homingTask_x(void *pvParameters)
     // Stop and set position zero
     Stepper_x->stopMove();
     Stepper_x->setCurrentPosition(0);
-    vTaskDelay(pdMS_TO_TICKS(100)); // Wait for the move to complete  
+    vTaskDelay(pdMS_TO_TICKS(100));       // Wait for the move to complete
     Stepper_x->setSpeedInHz(2000);        // positive speed
     Stepper_x->setDirectionPin(dirPin_x); // Ensure direction pin is set
-    Stepper_x->moveTo(200); // Move 20mm away from switch
-    vTaskDelay(pdMS_TO_TICKS(100)); // Wait for the move to complete
+    Stepper_x->moveTo(200);               // Move 20mm away from switch
+    vTaskDelay(pdMS_TO_TICKS(100));       // Wait for the move to complete
     Stepper_x->stopMove();
     Stepper_x->setCurrentPosition(0);
 
@@ -204,14 +208,14 @@ void homingTask_y(void *pvParameters)
     // Stop and set position zero
     Stepper_y->stopMove();
     Stepper_y->setCurrentPosition(0);
-    vTaskDelay(pdMS_TO_TICKS(100)); // Ensure stop is processed
+    vTaskDelay(pdMS_TO_TICKS(100));       // Ensure stop is processed
     Stepper_y->setSpeedInHz(2000);        // positive speed
     Stepper_y->setDirectionPin(dirPin_y); // Ensure direction pin is set
-    Stepper_y->moveTo(0); // Move 20mm away from switch
-    vTaskDelay(pdMS_TO_TICKS(100)); // Wait for the move to complete
+    Stepper_y->moveTo(0);                 // Move 20mm away from switch
+    vTaskDelay(pdMS_TO_TICKS(100));       // Wait for the move to complete
     Stepper_y->stopMove();
     Stepper_y->setCurrentPosition(0);
-    
+
     homingDone_y = true;
     Serial.println("Y axis homed to position 0");
 

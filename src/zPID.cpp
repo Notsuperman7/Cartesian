@@ -63,6 +63,7 @@ void home_z(void *pvParameters)
 {
     Serial.println("Homing z axis...");
     setMotor(-200);
+    vTaskDelay(pdMS_TO_TICKS(50)); // Let motor start
     while (digitalRead(limitSwitchPin_z) == HIGH)
     {
         vTaskDelay(pdMS_TO_TICKS(1));
@@ -106,13 +107,15 @@ void applyPID(void *parameter)
 
     lastTime = micros();
     lastCount = encoderCount;
+    static float lastTarget = -999.0f;
 
     while (1)
     {
         unsigned long now = micros();
         float deltaTime = (now - lastTime) / 1e6f;
 
-        if (deltaTime < 0.001f) { // Minimum 1ms update rate
+        if (deltaTime < 0.001f)
+        { // Minimum 1ms update rate
             vTaskDelay(pdMS_TO_TICKS(1));
             continue;
         }
@@ -124,8 +127,15 @@ void applyPID(void *parameter)
         currentCount = encoderCount;
         portEXIT_CRITICAL(&encMux);
 
+        // Track target position changes
+        if (target_z_Pos != lastTarget)
+        {
+            lastTarget = target_z_Pos;
+            movement_z_done = false;
+        }
+
         float currentDistance = computeDistanceMM(currentCount);
-        float currentVelocity = (currentCount - lastCount) / deltaTime;
+        float currentVelocity = computeDistanceMM(currentCount - lastCount) / deltaTime; // Convert to mm/s
         lastCount = currentCount;
 
         // outer loop displacement control
@@ -133,8 +143,8 @@ void applyPID(void *parameter)
         // inner loop: velocity control
         int pwm = (int)computePID(velPID, targetVelocity, currentVelocity, deltaTime);
 
-        // if error smaller than 5% of target_Z_Pos stop
-        if (abs(target_z_Pos - currentDistance) <= 0.05 * target_z_Pos)
+        // if error smaller than 0.5mm stop
+        if (abs(target_z_Pos - currentDistance) <= 0.5f)
         {
             Serial.println("Z position reached: " + String(currentDistance) + " mm");
             pwm = 0;
@@ -166,6 +176,4 @@ void startup_Z()
     lastTime = micros();
 
     Serial.println("Ready: PID position control (non-blocking).");
-
-
 }

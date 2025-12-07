@@ -2,9 +2,9 @@
 #define _CONFIG_H_
 
 // Define Z axis pin connections
-#define IN1 15
+#define IN1 0
 #define IN2 2
-#define ENA 0
+#define ENA 15
 #define ENC_A 32
 #define ENC_B 33
 #define limitSwitchPin_z 14
@@ -14,7 +14,6 @@
 // Z Axis Motor Configuration
 constexpr int PPR = 374;        // pulses per revolution (as you defined)
 constexpr float screw_lead = 8; // linear mm per revolution (screw pitch)
-
 
 // PID struct
 struct PID
