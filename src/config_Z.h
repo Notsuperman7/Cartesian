@@ -5,8 +5,8 @@
 #define IN1 2
 #define IN2 16
 #define ENA 15
-#define ENC_A 33
-#define ENC_B 32
+#define ENC_A 25
+#define ENC_B 26
 #define limitSwitchPin_z 14
 
 // Define Z axis constants
@@ -24,7 +24,7 @@ struct PID
 };
 
 // Tune these later if needed
-PID posPID = {10, 0.5, 5.3, 0.0, 0.0, -200.0, 200.0};
+PID posPID = {10, 0.7, 5.3, 0.0, 0.0, -200.0, 200.0};
 PID velPID = {1, 0.1, 0.0, 0.0, 0.0, -255.0, 255.0};
 
 #endif

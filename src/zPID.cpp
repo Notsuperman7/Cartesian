@@ -2,31 +2,38 @@
 #include "config_Z.h"
 #include "homing_flags.h"
 
-portMUX_TYPE encMux = portMUX_INITIALIZER_UNLOCKED;
-
 float target_z_Pos = 00.0; // target in mm
 volatile bool movement_z_done = true;
 volatile bool homingDone_z = false;
 
 volatile long encoderCount = 0;
+volatile uint8_t lastEncoderState = 0; // Store last encoder state for quadrature decoding
+volatile uint32_t isrCallCount = 0;    // Debug: count ISR calls
 
 unsigned long lastTime = 0;
 long lastCount = 0;
 
+// No lookup table needed - simple direction detection on RISING edge of A
+// Direction determined by B phase when A rises
+
 // ---------------- Encoder ISR ----------------
-// single interrupt on ENC_A, sample ENC_B inside ISR
+// Interrupt on RISING edge of ENC_A only - more reliable for fast movement
 void IRAM_ATTR encoderISR()
 {
-    // read both lines quickly
-    bool b = digitalRead(ENC_B);
+    isrCallCount++; // Debug counter
 
-    portENTER_CRITICAL_ISR(&encMux);
-    // standard quadrature decoding (choose sign that matches your wiring)
-    if (b == true)
-        encoderCount--; // direction sign chosen to match your wiring earlier
-    else
-        encoderCount++;
-    portEXIT_CRITICAL_ISR(&encMux);
+    // Read both lines using ESP32 GPIO registers
+    uint32_t gpioState = REG_READ(GPIO_IN_REG);
+    uint8_t a = (gpioState >> ENC_A) & 1;
+    uint8_t b = (gpioState >> ENC_B) & 1;
+
+    // On rising edge of A: if B is low, we're going forward; if B is high, backward
+    // This is the standard quadrature decoding approach
+    if (b) {
+        encoderCount--;  // Backward
+    } else {
+        encoderCount++;  // Forward
+    }
 }
 
 void setupPWM()
@@ -68,9 +75,8 @@ void home_z(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(1));
     }
     setMotor(0);
-    portENTER_CRITICAL(&encMux);
-    encoderCount = 0;
-    portEXIT_CRITICAL(&encMux);
+    encoderCount = 0; // Reset encoder count - atomic assignment, no critical section needed
+    isrCallCount = 0; // Reset ISR call counter for diagnostics
 
     homingDone_z = true;
     Serial.println("Z axis homed to position 0");
@@ -78,7 +84,7 @@ void home_z(void *pvParameters)
     vTaskDelete(NULL);
 }
 
-float computeDistanceMM(long count)
+inline float computeDistanceMM(long count)
 {
     float rev = (count / (float)PPR); // revolutions
     return rev * screw_lead;          // linear mm
@@ -122,10 +128,9 @@ void applyPID(void *parameter)
 
         lastTime = now;
 
-        long currentCount;
-        portENTER_CRITICAL(&encMux);
-        currentCount = encoderCount;
-        portEXIT_CRITICAL(&encMux);
+        // Read encoder count - no critical section needed for single atomic read on ESP32
+        long currentCount = encoderCount;
+        uint32_t currentIsrCalls = isrCallCount;
 
         // Track target position changes
         if (target_z_Pos != lastTarget)
@@ -151,7 +156,11 @@ void applyPID(void *parameter)
             Serial.print(currentDistance, 2);
             Serial.print(" mm | Target: ");
             Serial.print(target_z_Pos, 2);
-            Serial.print(" mm | Vel: ");
+            Serial.print(" mm | Count: ");
+            Serial.print(currentCount);
+            Serial.print(" | ISR calls: ");
+            Serial.print(currentIsrCalls);
+            Serial.print(" | Vel: ");
             Serial.print(currentVelocity, 2);
             Serial.print(" mm/s | PWM: ");
             Serial.println(pwm);
@@ -179,14 +188,47 @@ void startup_Z()
     pinMode(ENA, OUTPUT);
 
     pinMode(limitSwitchPin_z, INPUT);
-    pinMode(ENC_A, INPUT); // use INPUT; use external pull-ups if needed
-    pinMode(ENC_B, INPUT);
+    // Enable internal pull-ups on encoder lines to avoid floating inputs
+    pinMode(ENC_A, INPUT_PULLUP);
+    pinMode(ENC_B, INPUT_PULLUP);
 
     // setup Enable PWM for enable pin
     setupPWM();
 
-    // Attach single interrupt on A (use RISING to reduce noise; CHANGE is also OK if you want double resolution)
-    attachInterrupt(digitalPinToInterrupt(ENC_A), encoderISR, RISING);
+    // Initialize last encoder state from the pins before enabling interrupts
+    {
+        uint32_t gpioState = REG_READ(GPIO_IN_REG);
+        bool a = (gpioState >> ENC_A) & 1;
+        bool b = (gpioState >> ENC_B) & 1;
+        lastEncoderState = (a << 1) | b;
+        Serial.print("Initial encoder state - A(GPIO");
+        Serial.print(ENC_A);
+        Serial.print("):");
+        Serial.print(a);
+        Serial.print(" B(GPIO");
+        Serial.print(ENC_B);
+        Serial.print("):");
+        Serial.println(b);
+    }
+
+    // Attach interrupt on RISING edge of ENC_A only - simpler and more reliable
+    Serial.print("Attempting to attach interrupt to GPIO");
+    Serial.print(ENC_A);
+    Serial.println("...");
+
+    int intNum = digitalPinToInterrupt(ENC_A);
+    Serial.print("Interrupt number: ");
+    Serial.println(intNum);
+
+    if (intNum == NOT_AN_INTERRUPT)
+    {
+        Serial.println("ERROR: GPIO pin does not support interrupts!");
+    }
+    else
+    {
+        attachInterrupt(intNum, encoderISR, RISING);
+        Serial.println("Interrupt attached successfully on RISING edge");
+    }
 
     lastTime = micros();
 
