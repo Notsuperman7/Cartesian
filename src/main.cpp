@@ -31,9 +31,10 @@ void movePart(void *parameter)
 {
   while (1)
   {
-    while (moveXYZ(0, 0, 50) != true)
+    while (moveXYZ(430, 0, 50) != true)
     {
       vTaskDelay(pdMS_TO_TICKS(1000));
+
     }
     grabPart();
 
@@ -56,11 +57,13 @@ void setup()
   startup_XY();
   startup_Z();
     // Start homing tasks
-  xTaskCreate(homingTask_x, "Homing_X", 4096, NULL, 2, NULL); // create X homing task
-  xTaskCreate(homingTask_y, "Homing_Y", 4096, NULL, 2, NULL); // create Y homing task
-  xTaskCreate(home_z, "home_z", 4096, NULL, 2, NULL); // create Z homing task
+  xTaskCreate(homingTask_x, "Homing_X", 4096, NULL, 3, NULL); // create X homing task
+  xTaskCreate(homingTask_y, "Homing_Y", 4096, NULL, 3, NULL); // create Y homing task
+  xTaskCreate(home_z, "home_z", 4096, NULL, 1, NULL); // create Z homing task
   xTaskCreate(applyPID, "applyPID", 4096, NULL, 1, NULL); // create Z motion task
-  xTaskCreate(movePart, "movePart", 4096, NULL, 1, NULL); // create part moving task in XY plane
+  xTaskCreate(movePart, "movePart", 4096, NULL, 2, NULL); // create part moving task in XY plane
+  xTaskCreate(motionTask_x, "motionTask_x", 4096, NULL, 2, NULL); // create X motion task
+  xTaskCreate(motionTask_y, "motionTask_y", 4096, NULL, 2, NULL); // create Y motion task
 }
 
 void loop()

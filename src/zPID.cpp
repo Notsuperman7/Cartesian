@@ -40,14 +40,14 @@ void setupPWM()
 void setMotor(int pwm)
 {
 
-    ledcWrite(0, pwm);
+    ledcWrite(0, abs(pwm));
     if (pwm > 0)
     {
         // DOWN
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, HIGH);
     }
-    if (pwm < 0)
+    else if (pwm < 0)
     {
         // UP
         digitalWrite(IN1, HIGH);
@@ -62,7 +62,7 @@ void setMotor(int pwm)
 void home_z(void *pvParameters)
 {
     Serial.println("Homing z axis...");
-    setMotor(100);
+    setMotor(-200);
     while (digitalRead(limitSwitchPin_z) == HIGH)
     {
         vTaskDelay(pdMS_TO_TICKS(1));
@@ -136,6 +136,7 @@ void applyPID(void *parameter)
         // if error smaller than 5% of target_Z_Pos stop
         if (abs(target_z_Pos - currentDistance) <= 0.05 * target_z_Pos)
         {
+            Serial.println("Z position reached: " + String(currentDistance) + " mm");
             pwm = 0;
             movement_z_done = true;
         }
