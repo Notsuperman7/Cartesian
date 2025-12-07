@@ -18,12 +18,11 @@ long lastCount = 0;
 void IRAM_ATTR encoderISR()
 {
     // read both lines quickly
-    bool a = digitalRead(ENC_A);
     bool b = digitalRead(ENC_B);
 
     portENTER_CRITICAL_ISR(&encMux);
     // standard quadrature decoding (choose sign that matches your wiring)
-    if (a == b)
+    if (b == true)
         encoderCount--; // direction sign chosen to match your wiring earlier
     else
         encoderCount++;
@@ -62,7 +61,7 @@ void setMotor(int pwm)
 void home_z(void *pvParameters)
 {
     Serial.println("Homing z axis...");
-    setMotor(-200);
+    setMotor(-180);
     vTaskDelay(pdMS_TO_TICKS(50)); // Let motor start
     while (digitalRead(limitSwitchPin_z) == HIGH)
     {
