@@ -31,7 +31,7 @@ void movePart(void *parameter)
 {
   while (1)
   {
-    while (moveXYZ(380, 177, 0) != true)
+    while (moveXYZ(50, 50, 10) != true)
     {
       vTaskDelay(pdMS_TO_TICKS(1000));
     }
