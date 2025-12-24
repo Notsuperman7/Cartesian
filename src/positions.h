@@ -1,59 +1,31 @@
 #ifndef _POSITIONS_H_
 #define _POSITIONS_H_
 
-constexpr int lid = 8;
-constexpr int base = 6;
-constexpr int lid_on_base = 3;
-
-struct coordinates
+struct Coordinates
 {
     int x;
     int y;
 };
 
+constexpr int z_lid = 77;
+constexpr int z_base = 67;
+constexpr int z_lid_on_base = 37;
+
 // sorting Box Position
-coordinates sortBox;
-sortBox.x = 380;
-sortBox.y = 195;
+inline constexpr Coordinates sortBox = {380, 210};
 
 // assembly Box Positions
-coordinates assemBox[8];
-assemBox[0].x = 35;
-assemBox[0].y = 65;
-assemBox[1].x = 35;
-assemBox[1].y = 125;
-assemBox[2].x = 35;
-assemBox[2].y = 223;
-assemBox[3].x = 35;
-assemBox[3].y = 286;
-
-assemBox[4].x = 90;
-assemBox[4].y = 65;
-assemBox[5].x = 90;
-assemBox[5].y = 125;
-assemBox[6].x = 90;
-assemBox[6].y = 223;
-assemBox[7].x = 90;
-assemBox[7].y = 286;
+inline constexpr Coordinates assemBox[8] =
+{
+    {10, 95}, {65, 95}, {123, 95}, {175, 95},
+    {10, 155}, {65, 155}, {123, 155}, {175, 155}
+};
 
 // reserve Box Positions
-coordinates reserveBox[8];
-reserveBox[0].x = 144;
-reserveBox[0].y = 65;
-reserveBox[1].x = 144;
-reserveBox[1].y = 125;
-reserveBox[2].x = 144;
-reserveBox[2].y = 223;
-reserveBox[3].x = 144;
-reserveBox[3].y = 286;
-
-reserveBox[4].x = 199;
-reserveBox[4].y = 65;
-reserveBox[5].x = 199;
-reserveBox[5].y = 125;
-reserveBox[6].x = 199;
-reserveBox[6].y = 223;
-reserveBox[7].x = 199;
-reserveBox[7].y = 286;
+inline constexpr Coordinates reserveBox[8] =
+{
+    {10, 260}, {65, 260}, {123, 260}, {175, 260},
+    {10, 315}, {65, 315}, {123, 315}, {175, 315}
+};
 
 #endif
