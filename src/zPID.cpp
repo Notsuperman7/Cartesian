@@ -14,13 +14,13 @@ volatile uint32_t isrCallCount = 0;
 unsigned long lastTime = 0;
 long lastCount = 0;
 // ===== MATLAB tuned gains (Z axis) =====
-constexpr float Kp_pos = 0.9162f;   // 1/s  (v_sp = Kp_pos * pos_error)
-constexpr float Kp_vel = 0.0598f;   // PWM / (mm/s)
-constexpr float Ki_vel = 0.0274f;   // PWM / mm   (integral of velocity error)
+constexpr float Kp_pos = 42.8323f;   // 1/s  (v_sp = Kp_pos * pos_error)
+constexpr float Kp_vel = 2.7956f;   // PWM / (mm/s)
+constexpr float Ki_vel = 1.2809f;   // PWM / mm   (integral of velocity error)
 
 // ===== Limits / safety =====
-constexpr int PWM_MIN = -180;
-constexpr int PWM_MAX = 180;
+constexpr int PWM_MIN = -220;
+constexpr int PWM_MAX = 220;
 
 constexpr float VMAX   = 100.0f;    // mm/s  (safe start)
 constexpr float POS_TOL = 0.5f;     // mm (stop band)
@@ -39,17 +39,17 @@ void IRAM_ATTR encoderISR()
 }
 
 /* ---------------- PWM + Motor ---------------- */
-void setupPWM()
-{
-    ledcSetup(0, 20000, 8);
-    ledcAttachPin(ENA, 0);
-    ledcWrite(0, 0);
-}
+// void setupPWM()
+// {
+//     ledcSetup(0, 20000, 8);
+//     ledcAttachPin(ENA, 0);
+//     ledcWrite(0, 0);
+// }
 
-static inline void setMotor(int pwm)
+void setMotor(int pwm)
 {
-    pwm = constrain(pwm, PWM_MIN, PWM_MAX);
-    ledcWrite(0, abs(pwm));
+    //pwm = constrain(pwm, PWM_MIN, PWM_MAX);
+    analogWrite(ENA, abs(pwm));
 
     if (pwm > 0) {
         // DOWN
@@ -77,7 +77,7 @@ static inline float computeDistanceMM(long count)
 void home_z(void *pvParameters)
 {
     Serial.println("Homing z axis...");
-    setMotor(-120);
+    setMotor(-70);
     vTaskDelay(pdMS_TO_TICKS(50));
 
     while (digitalRead(limitSwitchPin_z) == HIGH) {
@@ -85,9 +85,11 @@ void home_z(void *pvParameters)
     }
 
     setMotor(0);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     setMotor(120);
-    vTaskDelay(pdMS_TO_TICKS(500));
+    while (digitalRead(limitSwitchPin_z) != HIGH) {
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
     setMotor(0);
     
     encoderCount = 0;
@@ -200,12 +202,13 @@ void startup_Z()
     pinMode(IN1, OUTPUT);
     pinMode(IN2, OUTPUT);
     pinMode(ENA, OUTPUT);
+    analogWrite(ENA, 0);
 
-    pinMode(limitSwitchPin_z, INPUT);
+    pinMode(limitSwitchPin_z, INPUT_PULLUP);
     pinMode(ENC_A, INPUT_PULLDOWN);
     pinMode(ENC_B, INPUT_PULLDOWN);
 
-    setupPWM();
+    //setupPWM();
 
     int intNum = digitalPinToInterrupt(ENC_A);
     if (intNum == NOT_AN_INTERRUPT) {
