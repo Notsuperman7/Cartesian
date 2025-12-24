@@ -2,6 +2,9 @@
 #include "xy_int.h"
 #include "homing_flags.h"
 #include "z_int.h"
+#include "Sender.h"
+#include "Reciver.h"
+
 //#include "positions.h"
 
 
@@ -191,6 +194,8 @@ void setup()
   pinMode(grab_pin, OUTPUT);
   startup_XY();
   startup_Z();
+  Sender_Init();
+  Receiver_Init();
   // Start homing tasks
   xTaskCreate(homingTask_x, "Homing_X", 4096, NULL, 3, NULL);     // create X homing task
   xTaskCreate(homingTask_y, "Homing_Y", 4096, NULL, 3, NULL);     // create Y homing task
