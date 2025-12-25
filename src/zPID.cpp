@@ -70,7 +70,7 @@ static inline float computeDistanceMM(long count)
 void home_z(void *pvParameters)
 {
     Serial.println("Homing z axis...");
-    setMotor(-70);
+    setMotor(-130);
     vTaskDelay(pdMS_TO_TICKS(50));
 
     while (digitalRead(limitSwitchPin_z) == HIGH) {
@@ -172,7 +172,7 @@ void applyPID(void *parameter)
 
         setMotor(pwm);
 
-        // Debug every 500ms
+        /*// Debug every 500ms
         if (now - lastDebugTime >= 500000) {
             Serial.print("Z Pos: "); Serial.print(pos_mm, 2);
             Serial.print(" mm | Target: "); Serial.print(target_z_Pos, 2);
@@ -182,7 +182,7 @@ void applyPID(void *parameter)
             Serial.print(" | ISR: "); Serial.println(isrCallCount);
             lastDebugTime = now;
         }
-
+       */
         vTaskDelay(pdMS_TO_TICKS(5)); // ~200 Hz
     }
 }

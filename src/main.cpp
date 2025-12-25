@@ -136,6 +136,7 @@ void partAssembly(void *parameter)
       break;
     case 'N':
       currentPart.isOccupied=false;
+      Send("F");
     delay(1000);
       break;
     default:
